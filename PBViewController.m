@@ -27,14 +27,11 @@
 
 - (void) removeView
 {
+	[self unbind:@"repository"];
 	[[self view] removeFromSuperview];	// remove the current view
 }
 
 - (void) awakeFromNib
 {
-	if (viewToolbar)
-		[superController useToolbar:viewToolbar];
-	else
-		[superController useToolbar:[[NSToolbar alloc] initWithIdentifier:@"EmptyBar"]];
 }
 @end

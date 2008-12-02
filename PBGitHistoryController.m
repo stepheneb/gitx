@@ -127,7 +127,7 @@
 	PBGitCommit *commit = [[commitController selectedObjects] objectAtIndex:0];
 	if (!commit)
 		return;
-	NSString *info = [NSString stringWithFormat:@"%@ (%@)", [commit sha], [commit subject]];
+	NSString *info = [NSString stringWithFormat:@"%@ (%@)", [[commit realSha] substringToIndex:10], [commit subject]];
 
 	NSPasteboard *a =[NSPasteboard generalPasteboard];
 	[a declareTypes:[NSArray arrayWithObject:NSStringPboardType] owner:self];
@@ -175,7 +175,7 @@
 
 - (void) selectCommit: (NSString*) commit
 {
-	NSPredicate* selection = [NSPredicate predicateWithFormat:@"sha == %@", commit];
+	NSPredicate* selection = [NSPredicate predicateWithFormat:@"realSha == %@", commit];
 	NSArray* selectedCommits = [repository.revisionList.commits filteredArrayUsingPredicate:selection];
 	[commitController setSelectedObjects: selectedCommits];
 	int index = [[commitController selectionIndexes] firstIndex];
@@ -190,6 +190,10 @@
 - (void) removeView
 {
 	[webView close];
+	[commitController removeObserver:self forKeyPath:@"selection"];
+	[treeController removeObserver:self forKeyPath:@"selection"];
+	[repository removeObserver:self forKeyPath:@"currentBranch"];
+
 	[super removeView];
 }
 

@@ -15,6 +15,7 @@
 - (void) awakeFromNib
 {
 	startFile = @"history";
+	repository = historyController.repository;
 	[super awakeFromNib];
 	[historyController addObserver:self forKeyPath:@"webCommit" options:0 context:@"ChangedCommit"];
 }
@@ -106,6 +107,12 @@ contextMenuItemsForElement:(NSDictionary *)element
 - getConfig:(NSString *)config
 {
 	return [historyController valueForKeyPath:[@"repository.config." stringByAppendingString:config]];
+}
+
+- (void) finalize
+{
+	[historyController removeObserver:self forKeyPath:@"webCommit"];
+	[super finalize];
 }
 
 @end

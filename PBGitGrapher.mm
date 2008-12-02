@@ -6,15 +6,12 @@
 //  Copyright 2008 __MyCompanyName__. All rights reserved.
 //
 
-extern "C" {
-#import "git/oid.h"
-}
-
 #import "PBGitGrapher.h"
 #import "PBGitCommit.h"
 #import "PBGitLane.h"
 #import "PBGitGraphLine.h"
 #import <list>
+#import "git/oid.h"
 
 using namespace std;
 
@@ -25,12 +22,9 @@ using namespace std;
 - (id) initWithRepository: (PBGitRepository*) repo
 {
 	refs = repo.refs;
-	repository = repo;
-	pl = new std::list<PBGitLane>;
+	pl = new std::list<PBGitLane *>;
 
 	PBGitLane::resetColors();
-	//[PBGitLane resetColors];
-
 	return self;
 }
 
@@ -136,7 +130,6 @@ void add_line(struct PBGitGraphLine *lines, int *nLines, int upper, int from, in
 	previous = [[PBGraphCellInfo alloc] initWithPosition:newPos andLines:lines];
 	if (currentLine > maxLines)
 		NSLog(@"Number of lines: %i vs allocated: %i", currentLine, maxLines);
-	//NSLog(@"Number of parents: %i, number of previous: %i, new lines: %i", commit.nParents, previousLanes->size(), currentLine);
 
 	previous.nLines = currentLine;
 	previous.sign = commit.sign;
@@ -161,6 +154,13 @@ void add_line(struct PBGitGraphLine *lines, int *nLines, int upper, int from, in
 
 - (void) finalize
 {
+	std::list<PBGitLane *> *lanes = (std::list<PBGitLane *> *)pl;
+	std::list<PBGitLane *>::iterator it = lanes->begin();
+	for (; it != lanes->end(); ++it)
+		delete *it;
+
+	delete lanes;
+
 	[super finalize];
 }
 @end

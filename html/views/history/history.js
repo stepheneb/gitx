@@ -48,7 +48,6 @@ var Commit = function(obj) {
 
 	this.reloadRefs = function() {
 		this.refs = this.object.refs;
-		Controller.log_("New refs: " + this.refs);
 	}
 
 };
@@ -118,14 +117,6 @@ var selectCommit = function(a) {
 	Controller.selectCommit_(a);
 }
 
-var showDiffs = function() {
-	var details = $("details");
-	details.style.display = "none";
-	details.innerHTML = commit.diff.escapeHTML();
-	highlightDiffs();
-	details.style.display = "";
-}
-
 var reload = function() {
 	$("notification").style.display = "none";
 	commit.reloadRefs();
@@ -158,27 +149,50 @@ var loadCommit = function(commitObject, currentRef) {
 	$("commitID").innerHTML = commit.sha;
 	$("authorID").innerHTML = commit.author_name;
 	$("subjectID").innerHTML = commit.subject.escapeHTML();
-	$("details").innerHTML = ""
+	$("diff").innerHTML = ""
 	$("message").innerHTML = ""
 	$("files").innerHTML = ""
 	$("date").innerHTML = ""
 	showRefs();
 
-	for (var i = 0; i < commitHeader.rows.length; i++) {
+	for (var i = 0; i < $("commit_header").rows.length; ++i) {
 		var row = $("commit_header").rows[i];
-		if (row.innerHTML.match(/Parent:/))
+		if (row.innerHTML.match(/Parent:/)) {
 			row.parentNode.removeChild(row);
+			--i;
+		}
 	}
 
-	for (var i = 0; i < commit.parents; i++) {
+	for (var i = 0; i < commit.parents.length; i++) {
 		var newRow = $("commit_header").insertRow(-1);
-		new_row.innerHTML = "<td class='property_name'>Parent:</td><td>" +
+		newRow.innerHTML = "<td class='property_name'>Parent:</td><td>" +
 			"<a href='' onclick='selectCommit(this.innerHTML); return false;'>" +
 			commit.parents[i] + "</a></td>";
 	}
 
 	// Scroll to top
 	scroll(0, 0);
+}
+
+var showDiff = function() {
+	var newfile = function(name, id) {
+		$("files").innerHTML += "<a href='#" + id + "'>" + name + "</a><br>";
+	}
+
+	var binaryDiff = function(filename) {
+		if (filename.match(/\.(png|jpg|pdf|icns|psd)$/i))
+			return '<a href="#" onclick="return showImage(this, \'' + filename + '\')">Display image</a>';
+		else
+			return "Binary file differs";
+	}
+
+	highlightDiff(commit.diff, $("diff"), { "newfile" : newfile, "binaryFile" : binaryDiff });
+}
+
+var showImage = function(element, filename)
+{
+	element.outerHTML = '<img src="GitX://' + commit.sha + '/' + filename + '">';
+	return false;
 }
 
 var loadExtendedCommit = function(commit)
@@ -189,20 +203,11 @@ var loadExtendedCommit = function(commit)
 	$("date").innerHTML = commit.author_date;
 	$("message").innerHTML = commit.message.replace(/\n/g,"<br>");
 
-	if (commit.files)
-		var commit_file_links = commit.files;
-		for (var i=0; i < commit_file_links.length; i++) {
-			index = i+1;
-			commit_file_links[i] = "<a href='#file_index_" + i + "'>" + commit.files[i] + "</a>";
-		}
-		
-		$("files").innerHTML = commit_file_links.join("<br>");
+	if (commit.diff.length < 200000)
+		showDiff();
+	else
+		$("diff").innerHTML = "<a class='showdiff' href='' onclick='showDiff(); return false;'>This is a large commit. Click here or press 'v' to view.</a>";
 
-	if (commit.diff.length < 200000) {
-		showDiffs();
-	} else {
-		$("details").innerHTML = "<a class='showdiff' href='' onclick='showDiffs(); return false;'>This is a large commit. Click here or press 'v' to view.</a>";
-	}
 	hideNotification();
 	setGravatar(commit.author_email, $("gravatar"));
 }
